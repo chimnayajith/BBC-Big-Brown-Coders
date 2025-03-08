@@ -1,18 +1,12 @@
-from mongoengine import Document, StringField, ReferenceField, ListField, connect, IntField
+from mongoengine import Document, StringField, IntField, ReferenceField, connect
 
 connect('boing_db', host='mongodb://127.0.0.1:27017/boing_db')
 
+
 class User(Document):
+    ROLE_CHOICES = ('elderly', 'caregiver')
     name = StringField(required=True)
     age = IntField()
     phone = StringField(required=True, unique=True)
     email = StringField(unique=True)
-
-class Caregiver(Document):
-    name = StringField(required=True)
-    phone = StringField(required=True, unique=True)
-    email = StringField(required=True)
-
-class UserCaregivers(Document):
-    user = ReferenceField(User, required=True, unique=True)
-    caregivers = ListField(ReferenceField(Caregiver))
+    role = StringField(choices=ROLE_CHOICES, required=True)

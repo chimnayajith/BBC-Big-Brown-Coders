@@ -59,7 +59,6 @@ class _HomePageState extends State<HomePage> {
               .map((json) => User.fromJson(json))
               .toList();
         }
-        print(elderlyUsers);
       }
 
       setState(() {

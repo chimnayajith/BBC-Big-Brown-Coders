@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
-
+from datetime import timedelta
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -25,9 +25,9 @@ SECRET_KEY = "django-insecure-fnmqvx+)12_54)e$3e96ljtvj^nq4y2q539t*ig!it_1!aj9^&
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
-
+AUTH_USER_MODEL = 'authing.User'
 # Application definition
 
 INSTALLED_APPS = [
@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "rest_framework",
+    "rest_framework_simplejwt",
     "authing",
     "caregivers",
     "live_track",
@@ -134,6 +136,15 @@ REST_FRAMEWORK = {
     ], 
 } 
 
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': "django-insecure-fnmqvx+)12_54)e$3e96ljtvj^nq4y2q539t*ig!it_1!aj9^&",
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'USER_ID_FIELD': 'id',  
+    'USER_ID_CLAIM': 'user_id',
+}
 
 ASGI_APPLICATION = "boing.asgi.application"
 CHANNEL_LAYERS = {

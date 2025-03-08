@@ -10,18 +10,29 @@ class UserSerializer(serializers.Serializer):
     email = serializers.EmailField()
     role = serializers.ChoiceField(choices=['elderly', 'caregiver'])
     password = serializers.CharField(write_only=True)
+    emergency_contact = serializers.CharField(max_length=15, required=False, allow_blank=True)
 
     def validate_phone(self, value):
         if not value:
             raise serializers.ValidationError("Phone number is required.")
         return value
     
+    def validate(self, data):
+        role = data.get('role')
+        emergency_contact = data.get('emergency_contact')
+        
+        if role == 'elderly' and not emergency_contact:
+            raise serializers.ValidationError({"emergencyContact": "Emergency contact is required for elderly users."})
+        
+        return data
+
     def create(self, validated_data):
         user = User(
             name=validated_data["name"],
             phone=validated_data["phone"],
             email=validated_data.get("email", ""),
-            role = validated_data.get("role", "")
+            role = validated_data.get("role", ""),
+            emergency_contact = validated_data.get("emergency_contact", "")
         )
         user.set_password(validated_data["password"])
         user.save()
@@ -29,8 +40,11 @@ class UserSerializer(serializers.Serializer):
 
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
+    refresh['user_id'] = user.id
+    refresh['email'] = user.email
+    
     return {
-        'access': str(refresh.access_token),
+        'jwt': str(refresh.access_token),
     }
 
 from rest_framework import serializers
@@ -59,6 +73,10 @@ class LoginSerializer(serializers.Serializer):
 
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
+    # Add custom claims if needed
+    refresh['user_id'] = user.id
+    refresh['email'] = user.email
+    
     return {
-        "access": str(refresh.access_token),
+        'jwt': str(refresh.access_token),
     }

@@ -10,6 +10,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
+import 'package:boing_frontend/services/notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_background_service_android/flutter_background_service_android.dart';
@@ -77,6 +78,11 @@ Future<bool> onIosBackground(ServiceInstance service) async {
 void onStart(ServiceInstance service) async {
   DartPluginRegistrant.ensureInitialized();
   
+  // Initialize notifications early
+  await NotificationService.initialize();
+  
+  print('BACKGROUND SERVICE: Started');
+  
   // Fall detection parameters
   double fallThreshold = 2.5;
   double impactThreshold = 15.0;
@@ -103,53 +109,19 @@ void onStart(ServiceInstance service) async {
     service.stopSelf();
   });
   
+  // Test function for verification
+  service.on('testFall').listen((event) async {
+    print('BACKGROUND SERVICE: Testing fall alert notification');
+    await NotificationService.showFallAlert();
+  });
+  
   // Function to handle fall detection
   Future<void> detectFall() async {
     lastFallDetected = DateTime.now();
+    print('BACKGROUND SERVICE: FALL DETECTED! Showing notification');
     
-    // Show notification
-    final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-        FlutterLocalNotificationsPlugin();
-        
-    flutterLocalNotificationsPlugin.show(
-      999,
-      'Fall Detected!',
-      'Tap for emergency options',
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'fall_detection_channel',
-          'Fall Detection Alerts',
-          channelDescription: 'High priority alerts for fall detection',
-          importance: Importance.high,
-          priority: Priority.high,
-          fullScreenIntent: true,
-        ),
-        iOS: DarwinNotificationDetails(
-          presentAlert: true,
-          presentBadge: true,
-          presentSound: true,
-        ),
-      ),
-    );
-    
-    // Send data to server if needed
-    // try {
-    //   final response = await http.post(
-    //     Uri.parse('http://$apiURL$fallDetectionEndpoint'),
-    //     body: {
-    //       'timestamp': DateTime.now().toIso8601String(),
-    //       'event_type': 'fall_detected',
-    //     },
-    //   );
-      
-    //   if (response.statusCode == 200) {
-    //     print("Fall reported successfully to server");
-    //   } else {
-    //     print("Failed to report fall: ${response.statusCode}");
-    //   }
-    // } catch (e) {
-    //   print("Error reporting fall: $e");
-    // }
+    // Use the standalone notification service
+    await NotificationService.showFallAlert();
   }
   
   // Set up accelerometer subscription
@@ -165,113 +137,57 @@ void onStart(ServiceInstance service) async {
       recentAccelerations.removeAt(0);
     }
     
-    // Update service with current data
-    service.invoke(
-      'updateAcceleration',
-      {'acceleration': currentAcceleration.toStringAsFixed(2)},
-    );
+    // Print occasionally for debugging
+    if (DateTime.now().second % 10 == 0) {
+      print('BACKGROUND SERVICE: Current acceleration: $currentAcceleration');
+    }
     
     // Free-fall detection (acceleration significantly below normal gravity)
     if (!inPotentialFall && currentAcceleration < fallThreshold) {
-      print("Potential free-fall detected: $currentAcceleration (below threshold)");
+      print("BACKGROUND SERVICE: Potential free-fall detected: $currentAcceleration (below threshold)");
       inPotentialFall = true;
       
       // Look for impact within the next second
       Future.delayed(Duration(milliseconds: 1000), () {
         if (inPotentialFall) {
           inPotentialFall = false;
-          print("No impact detected after potential free-fall");
+          print("BACKGROUND SERVICE: No impact detected after potential free-fall");
         }
       });
     }
     
     // Impact detection (after potential free-fall)
     if (inPotentialFall && currentAcceleration > impactThreshold) {
-      print("Impact detected: $currentAcceleration");
+      print("BACKGROUND SERVICE: Impact detected: $currentAcceleration");
       inPotentialFall = false;
       
       // Check for cooldown period
       if (lastFallDetected != null && 
           DateTime.now().difference(lastFallDetected!).inSeconds < 10) {
-        print("Within cooldown period - ignoring");
+        print("BACKGROUND SERVICE: Within cooldown period - ignoring");
         return;
       }
       
       isProcessingFall = true;
       
-      // Wait a moment and check for post-impact stillness
-      Future.delayed(Duration(milliseconds: 500), () {
-        // Calculate average recent acceleration
-        double avgRecentAccel = recentAccelerations.isNotEmpty 
-            ? recentAccelerations.reduce((a, b) => a + b) / recentAccelerations.length 
-            : 9.8;
-        
-        print("Confirming fall. Recent average acceleration: $avgRecentAccel");
-        
-        // If device is relatively still after impact, confirm as fall
-        if (avgRecentAccel > (stillnessThreshold - 0.1) && avgRecentAccel < (9.8 + stillnessThreshold)) {
-          detectFall();
-        } else {
-          print("False alarm - no consistent stillness after impact");
-        }
-        
-        // Reset processing flag after a delay
-        Future.delayed(Duration(seconds: 3), () {
-          isProcessingFall = false;
-        });
+      // Process the fall detection immediately
+      detectFall();
+      
+      // Reset processing flag after a delay
+      Future.delayed(Duration(seconds: 10), () {
+        isProcessingFall = false;
+        print("BACKGROUND SERVICE: Ready to detect falls again");
       });
     }
   });
   
   // Keep service alive with periodic updates
-  Timer.periodic(const Duration(seconds: 1), (timer) async {
+  Timer.periodic(const Duration(seconds: 15), (timer) async {
     if (service is AndroidServiceInstance) {
-      if (await service.isForegroundService()) {
-        service.setForegroundNotificationInfo(
-          title: "Fall Detection Active",
-          content: "Monitoring for falls",
-        );
-      }
+      service.setForegroundNotificationInfo(
+        title: "Fall Detection Active",
+        content: "Monitoring at: ${DateTime.now().hour}:${DateTime.now().minute.toString().padLeft(2, '0')}",
+      );
     }
-    
-    // Check if service should be running
-    SharedPreferences preferences = await SharedPreferences.getInstance();
-    final isEnabled = preferences.getBool('fall_detection_enabled') ?? true;
-    
-    if (!isEnabled) {
-      timer.cancel();
-      service.stopSelf();
-    }
-    
-    // Publish current status
-    service.invoke(
-      'update',
-      {
-        'monitoring': true,
-        'lastCheck': DateTime.now().toIso8601String(),
-      },
-    );
   });
-}
-
-// To be called from your main.dart
-class FallDetectionManager {
-  static Future<void> startService() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('fall_detection_enabled', true);
-    final service = FlutterBackgroundService();
-    await service.startService();
-  }
-  
-  static Future<void> stopService() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('fall_detection_enabled', false);
-    final service = FlutterBackgroundService();
-    service.invoke('stopService');
-  }
-  
-  static Future<bool> isRunning() async {
-    final service = FlutterBackgroundService();
-    return await service.isRunning();
-  }
 }

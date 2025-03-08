@@ -38,7 +38,7 @@ class User(AbstractBaseUser):
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=255)
     role = models.CharField(max_length=10, choices=ROLE_CHOICES)
-
+    emergency_contact = models.CharField(max_length=15, blank=True, null=True)
     objects = UserManager()
 
     USERNAME_FIELD = "email"

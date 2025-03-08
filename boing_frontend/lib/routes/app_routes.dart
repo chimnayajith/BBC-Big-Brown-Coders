@@ -10,6 +10,7 @@ class AppRoutes {
   static const String register = '/register';
   static const String login = '/login';
   static const String addElderly = '/addElderly';
+  static const String elderlyDetail = '/elderly-detail';
   
   static Map<String, WidgetBuilder> routes = {
     home: (context) => const HomePage(),

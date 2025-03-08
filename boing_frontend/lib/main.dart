@@ -1,3 +1,4 @@
+import 'package:boing_frontend/permission.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'services/background_service.dart';
@@ -10,8 +11,8 @@ void main() async {
   // Ensure Flutter initialization is complete
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialize notification service
-  await NotificationService.initialize();
+  await initializeNotifications();
+  await requestPermissions();
   
   // Initialize and start the background service
   await initializeBackgroundService();

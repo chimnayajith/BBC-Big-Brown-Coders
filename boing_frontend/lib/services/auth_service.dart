@@ -336,4 +336,114 @@ static Future<Map<String, dynamic>> login({
       return false;
     }
   }
+
+  // Get settings for an elderly user
+static Future<Map<String, dynamic>> getElderlySettings(String elderlyId) async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+    
+    if (token == null) {
+      return {
+        'success': false,
+        'message': 'Not authenticated',
+      };
+    }
+    
+    // Try to get settings from API
+    final response = await http.get(
+      Uri.parse('http://$apiURL/elderly/$elderlyId/settings'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+    
+    if (response.statusCode == 200) {
+      final responseData = jsonDecode(response.body);
+      return {
+        'success': true,
+        'data': responseData,
+      };
+    } else {
+      // If API fails, return default values
+      return {
+        'success': true,
+        'data': {
+          'lowBatteryAlert': false,
+          'batteryThreshold': 15.0,
+          'fallDetectionEnabled': true,
+          'cctvDetectionEnabled': true,
+        },
+      };
+    }
+  } catch (e) {
+    print('Error getting elderly settings: $e');
+    // Return default values on error
+    return {
+      'success': true,
+      'data': {
+        'lowBatteryAlert': false,
+        'batteryThreshold': 15.0,
+        'fallDetectionEnabled': true,
+        'cctvDetectionEnabled': true,
+      },
+    };
+  }
 }
+
+// Update settings for an elderly user
+static Future<Map<String, dynamic>> updateElderlySettings({
+  required String elderlyId,
+  required Map<String, dynamic> settings,
+}) async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+    
+    if (token == null) {
+      return {
+        'success': false,
+        'message': 'Not authenticated',
+      };
+    }
+    
+    final response = await http.post(
+      Uri.parse('http://$apiURL/elderly/$elderlyId/settings'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(settings),
+    );
+    
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final responseData = jsonDecode(response.body);
+      return {
+        'success': true,
+        'data': responseData,
+      };
+    } else {
+      try {
+        final errorData = jsonDecode(response.body);
+        return {
+          'success': false, 
+          'message': errorData['message'] ?? 'Failed to update settings',
+        };
+      } catch (e) {
+        return {
+          'success': false,
+          'message': 'Failed to update settings',
+        };
+      }
+    }
+  } catch (e) {
+    return {
+      'success': false,
+      'message': 'Connection error: $e',
+    };
+  }
+}
+
+}
+

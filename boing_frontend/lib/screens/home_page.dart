@@ -1,3 +1,4 @@
+import 'package:boing_frontend/screens/elderly_detail_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -138,7 +139,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildCaregiverView() {
+ Widget _buildCaregiverView() {
   return SingleChildScrollView(
     padding: const EdgeInsets.all(16.0),
     child: Column(
@@ -231,53 +232,13 @@ class _HomePageState extends State<HomePage> {
                         ],
                       ),
                       isThreeLine: true,
-                      trailing: IconButton(
-                        icon: Icon(Icons.call, color: Colors.green),
-                        onPressed: () {
-                          // Launch phone call to elderly
-                          // Uri.parse('tel:${elderly.phone}')
-                        },
-                      ),
+                      trailing: Icon(Icons.chevron_right),
                       onTap: () {
-                        // Show detailed view or options for this elderly user
-                        showModalBottomSheet(
-                          context: context,
-                          builder: (context) => Container(
-                            padding: EdgeInsets.all(16),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                ListTile(
-                                  title: Text(elderly.name, style: TextStyle(fontWeight: FontWeight.bold)),
-                                  subtitle: Text('Elderly User'),
-                                ),
-                                Divider(),
-                                ListTile(
-                                  leading: Icon(Icons.call),
-                                  title: Text('Call'),
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                    // Launch call
-                                  },
-                                ),
-                                ListTile(
-                                  leading: Icon(Icons.message),
-                                  title: Text('Send Message'),
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                    // Open messaging
-                                  },
-                                ),
-                                ListTile(
-                                  leading: Icon(Icons.health_and_safety),
-                                  title: Text('View Health Status'),
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                    // Navigate to health status page
-                                  },
-                                ),
-                              ],
-                            ),
+                        // Navigate to the elderly detail page
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ElderlyDetailPage(elderly: elderly),
                           ),
                         );
                       },

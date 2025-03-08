@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from .models import User
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth.hashers import check_password
+
 
 class UserSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=100)

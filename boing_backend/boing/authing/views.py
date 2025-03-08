@@ -3,6 +3,8 @@ from rest_framework.views import APIView
 from rest_framework import status
 from .models import User
 from .serializers import UserSerializer, get_tokens_for_user
+from django.contrib.auth.hashers import check_password
+
 import json
 class RegisterView(APIView):
     def post(self, request):
@@ -23,7 +25,8 @@ class LoginView(APIView):
         email = data.get("email")
         password = data.get("password")
 
-        user = User.objects(email=email).first()
+        user = User.objects.filter(email=email).first()
+
         if user and check_password(password, user.password):
             token = get_tokens_for_user(user)
             return Response({

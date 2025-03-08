@@ -1,8 +1,7 @@
 from rest_framework import serializers
-from authing.models import User
+from .models import SOSConfig
 
-class ElderlyUserSerializer(serializers.ModelSerializer):
+class SOSConfigSerializer(serializers.ModelSerializer):
     class Meta:
-        model = User
-        fields = ['id', 'name', 'phone', 'email', 'emergency_contact']
-        # Exclude sensitive fields like password
+        model = SOSConfig
+        fields = "__all__"

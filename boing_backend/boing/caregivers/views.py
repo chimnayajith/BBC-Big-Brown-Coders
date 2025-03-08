@@ -1,25 +1,24 @@
-from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
-from authing.models import User
-from .serializers import ElderlyUserSerializer
-from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.views import APIView
+from .models import SOSConfig
+from .serializers import SOSConfigSerializer
 
-class CareGiverElderlyView(APIView):
-    authentication_classes = [JWTAuthentication]  # Explicitly specify authentication
+class SOSConfigView(APIView):
     permission_classes = [IsAuthenticated]
-    
+
     def get(self, request):
-        # Check if the requesting user is a caregiver
-        if request.user.role != 'caregiver':
-            return Response(
-                {"error": "Only caregivers can access this endpoint"}, 
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
-        # Get all elderly users
-        elderly_users = User.objects.filter(role='elderly')
-        serializer = ElderlyUserSerializer(elderly_users, many=True)
-        
+        sos_config, _ = SOSConfig.objects.get_or_create(user=request.user)
+        serializer = SOSConfigSerializer(sos_config)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def patch(self, request):
+        sos_config, _ = SOSConfig.objects.get_or_create(user=request.user)
+        serializer = SOSConfigSerializer(sos_config, data=request.data, partial=True)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

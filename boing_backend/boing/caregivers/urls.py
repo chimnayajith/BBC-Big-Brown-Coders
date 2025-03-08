@@ -1,6 +1,6 @@
 from django.urls import path
-from .views import CareGiverElderlyView
+from .views import SOSConfigView
 
 urlpatterns = [
-    path('elderly/', CareGiverElderlyView.as_view(), name='elderly'),
+    path("edit-config/", SOSConfigView.as_view(), name="edit-config"),
 ]

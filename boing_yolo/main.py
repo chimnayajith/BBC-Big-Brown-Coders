@@ -65,10 +65,10 @@ from twilio.rest import Client
 import pygame
 from ultralytics import YOLO
 
-TWILIO_SID = 'AC5cca60358f05eaaeb76f03409d24fd38'
-TWILIO_AUTH_TOKEN = 'a8500293b73b05e7ad96d0689d5996d7'
-TWILIO_FROM_NUMBER = '+19897873741'
-EMERGENCY_NUMBERS = ['+918075911824']
+TWILIO_SID = ''
+TWILIO_AUTH_TOKEN = ''
+TWILIO_FROM_NUMBER = ''
+EMERGENCY_NUMBERS = ['']
 
 pygame.mixer.init()
 ALARM_SOUND_PATH = "mixkit-retro-emergency-tones-2971.wav"

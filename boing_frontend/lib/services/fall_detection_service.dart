@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:math';
 import 'package:boing_frontend/fall_detection_widget.dart';
 import 'package:boing_frontend/services/auth_service.dart';
+import 'package:flutter/services.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:http/http.dart' as http;
 import '../constants/api_constants.dart';
@@ -212,32 +214,42 @@ class FallDetectionService {
     );
   }
   
-  // Handle fall detection
-  Future<void> _detectFall() async {
-    _lastFallDetected = DateTime.now();
-    _logDebug("FALL DETECTED!");
+// Handle fall detection - ultra-simplified approach
+Future<void> _detectFall() async {
+  _lastFallDetected = DateTime.now();
+  _logDebug("FALL DETECTED! Will send SOS in 30 seconds");
+  
+  // Start timer for automatic SOS after 30 seconds
+  _sosTimer?.cancel(); // Cancel any existing timer
+  _sosTimer = Timer(Duration(seconds: 30), () async {
+    _logDebug("30 seconds passed, sending SOS automatically");
+    _sendSOSDirectly();
+  });
+  
+  // Report fall to server for logging
+  _reportFallToServer();
+  
+  // Notify any listeners
+  _fallDetectedController.add(null);
+}
+
+// Send SOS directly without UI interaction
+Future<void> _sendSOSDirectly() async {
+  try {
+    // Directly use AuthService to send SOS
+    final result = await AuthService.sendSOS(
+      message: "EMERGENCY! A fall was detected. This is an automatic alert."
+    );
     
-    // Start the SOS timer first (will be canceled if user responds)
-    startSOSTimer();
-    
-    // Try to show dialog if app is in foreground
-    BuildContext? contextToUse = navigationKey.currentContext;
-    
-    if (contextToUse != null && Navigator.of(contextToUse).canPop()) {
-      _logDebug("App in foreground, showing dialog");
-      await notificationsPlugin.cancel(0); // Cancel any existing notification
-      _showFallDialog(contextToUse);
+    if (result['success']) {
+      _logDebug("SOS sent successfully to: ${result['contacts']}");
     } else {
-      _logDebug("App not in foreground, showing notification");
-      await _showFallNotification();
+      _logDebug("Failed to send SOS: ${result['message']}");
     }
-    
-    // Notify listeners about the fall
-    _fallDetectedController.add(null);
-    
-    // Also report fall to server for logging purposes
-    _reportFallToServer();
+  } catch (e) {
+    _logDebug("Error sending SOS: $e");
   }
+}
   
   // Start the timer for automatic SOS
   void startSOSTimer() {

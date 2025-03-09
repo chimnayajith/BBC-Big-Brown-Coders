@@ -288,173 +288,134 @@ class _HomePageState extends State<HomePage> {
   );
 }
 
-  Widget _buildElderlyView() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Elderly welcome section
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Welcome, ${currentUser!.name}',
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  SizedBox(height: 8),
-                  Text('Your caregiver can monitor your activity and respond to emergencies.'),
-                ],
-              ),
-            ),
-          ),
-          
-          SizedBox(height: 24),
-          
-          // SOS button
-          Card(
-            color: Colors.red.shade50,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  Text(
-                    'Emergency SOS',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: () async {
-                      // Show confirmation dialog
-                      bool confirm = await showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: Text('Send SOS Alert?'),
-                          content: Text(
-                            'This will send an emergency alert to your caregiver. Continue?'
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              child: Text('Cancel'),
-                            ),
-                            ElevatedButton(
-                              onPressed: () => Navigator.pop(context, true),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
-                                foregroundColor: Colors.white,
-                              ),
-                              child: Text('Send SOS'),
-                            ),
-                          ],
-                        ),
-                      ) ?? false;
-                      
-                      if (confirm) {
-                        final result = await AuthService.sendSOS();
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content: Text(result['success'] 
-                              ? 'SOS alert sent successfully!' 
-                              : 'Failed to send SOS: ${result['message']}'),
-                          backgroundColor: result['success'] ? Colors.green : Colors.red,
-                        ));
-                      }
-                    },
-                    icon: Icon(Icons.emergency, size: 28),
-                    label: Text('SEND SOS ALERT', style: TextStyle(fontSize: 18)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-                      minimumSize: Size(double.infinity, 60),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          
-          SizedBox(height: 24),
-          
-          // Background service status
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+Widget _buildElderlyView() {
+  return Column(
+    children: [
+      // Main content in a scrollable area
+      Expanded(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Elderly welcome section
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Fall Detection',
+                        'Welcome, ${currentUser!.name}',
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
+                      SizedBox(height: 8),
+                      Text('Your caregiver can monitor your activity and respond to emergencies.'),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(height: 24),
+              
+              // Caregiver info
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Your Caregiver',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
-                      Switch(
-                        value: _serviceRunning,
-                        onChanged: (value) async {
-                          if (value) {
-                            await _service.startService();
-                          } else {
-                            _service.invoke('stopService');
-                          }
-                          await Future.delayed(Duration(milliseconds: 500));
-                          _checkServiceStatus();
-                        },
+                      SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Icon(Icons.phone, color: Colors.green),
+                          SizedBox(width: 8),
+                          Text(
+                            currentUser!.caregiverPhone ?? 'No caregiver assigned',
+                            style: TextStyle(fontSize: 16),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                  Text(_serviceRunning 
-                      ? 'Fall detection is active and will alert your caregiver automatically if a fall is detected'
-                      : 'Fall detection is disabled'),
-                  
-                  SizedBox(height: 16),
-                  Center(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        _service.invoke('testFall');
-                      },
-                      child: Text('Test Fall Alert'),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
+              // Add other content cards here
+            ],
           ),
-          
-          SizedBox(height: 24),
-          
-          // Caregiver info
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Your Caregiver',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Icon(Icons.phone, color: Colors.green),
-                      SizedBox(width: 8),
-                      Text(
-                        currentUser!.caregiverPhone ?? 'No caregiver assigned',
-                        style: TextStyle(fontSize: 16),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
-    );
-  }
+      
+      // Fixed SOS button at the bottom
+      Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Card(
+          color: Colors.red.shade50,
+          margin: EdgeInsets.zero,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                Text(
+                  'Emergency SOS',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    // Show confirmation dialog
+                    bool confirm = await showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: Text('Send SOS Alert?'),
+                        content: Text(
+                          'This will send an emergency alert to your caregiver. Continue?'
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: Text('Cancel'),
+                          ),
+                          ElevatedButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              foregroundColor: Colors.white,
+                            ),
+                            child: Text('Send SOS'),
+                          ),
+                        ],
+                      ),
+                    ) ?? false;
+                    if (confirm) {
+                      final result = await AuthService.sendSOS();
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text(result['success']
+                          ? 'SOS alert sent successfully!'
+                          : 'Failed to send SOS: ${result['message']}'),
+                        backgroundColor: result['success'] ? Colors.green : Colors.red,
+                      ));
+                    }
+                  },
+                  icon: Icon(Icons.emergency, size: 28),
+                  label: Text('SEND SOS ALERT', style: TextStyle(fontSize: 18)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                    minimumSize: Size(double.infinity, 60),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ],
+      );
 }
+}
+

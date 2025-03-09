@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../models/user.dart';
 import '../services/auth_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class ElderlyDetailPage extends StatefulWidget {
   final User elderly;
@@ -29,10 +31,24 @@ class _ElderlyDetailPageState extends State<ElderlyDetailPage> {
   bool fallDetectionEnabled = true;
   bool cctvDetectionEnabled = true;
   
+  // SOS Message and contacts
+  final TextEditingController _sosMessageController = TextEditingController(text: 'Emergency SOS alert!');
+  final TextEditingController _newEmergencyNumberController = TextEditingController();
+  List<String> emergencyContacts = [];
+  
   @override
   void initState() {
     super.initState();
     _loadSettings();
+    // Initialize with elderly's phone as the first emergency contact
+    emergencyContacts.add(widget.elderly.phone);
+  }
+  
+  @override
+  void dispose() {
+    _sosMessageController.dispose();
+    _newEmergencyNumberController.dispose();
+    super.dispose();
   }
   
   Future<void> _loadSettings() async {
@@ -41,7 +57,7 @@ class _ElderlyDetailPageState extends State<ElderlyDetailPage> {
     });
     
     try {
-      // In a real app, fetch these settings from the backend
+      // Use AuthService to get elderly settings
       final settingsResult = await AuthService.getElderlySettings(widget.elderly.id);
       
       if (settingsResult['success']) {
@@ -51,10 +67,22 @@ class _ElderlyDetailPageState extends State<ElderlyDetailPage> {
           batteryThreshold = settings['batteryThreshold'] ?? 15.0;
           fallDetectionEnabled = settings['fallDetectionEnabled'] ?? true;
           cctvDetectionEnabled = settings['cctvDetectionEnabled'] ?? true;
+          
+          // Load emergency contacts if available
+          if (settings['emergencyContacts'] != null) {
+            emergencyContacts = List<String>.from(settings['emergencyContacts']);
+          } else if (!emergencyContacts.contains(widget.elderly.phone)) {
+            // Ensure elderly's phone is in emergency contacts
+            emergencyContacts.add(widget.elderly.phone);
+          }
+          
+          // Load SOS message if available
+          if (settings['sosMessage'] != null) {
+            _sosMessageController.text = settings['sosMessage'];
+          }
         });
       }
     } catch (e) {
-      // If settings can't be loaded, use defaults
       print('Error loading settings: $e');
     } finally {
       setState(() {
@@ -69,14 +97,20 @@ class _ElderlyDetailPageState extends State<ElderlyDetailPage> {
     });
     
     try {
+      // Prepare settings map
+      final settingsMap = {
+        'lowBatteryAlert': lowBatteryAlert,
+        'batteryThreshold': batteryThreshold,
+        'fallDetectionEnabled': fallDetectionEnabled,
+        'cctvDetectionEnabled': cctvDetectionEnabled,
+        'emergencyContacts': emergencyContacts,
+        'sosMessage': _sosMessageController.text,
+      };
+      
+      // Use AuthService to update settings
       final result = await AuthService.updateElderlySettings(
         elderlyId: widget.elderly.id,
-        settings: {
-          'lowBatteryAlert': lowBatteryAlert,
-          'batteryThreshold': batteryThreshold,
-          'fallDetectionEnabled': fallDetectionEnabled,
-          'cctvDetectionEnabled': cctvDetectionEnabled,
-        },
+        settings: settingsMap,
       );
       
       if (result['success']) {
@@ -108,7 +142,7 @@ class _ElderlyDetailPageState extends State<ElderlyDetailPage> {
     }
   }
   
-  // Request permissions and make a phone call
+  // Handle emergency call
   Future<void> _makePhoneCall() async {
     final phoneNumber = widget.elderly.phone;
     
@@ -121,7 +155,7 @@ class _ElderlyDetailPageState extends State<ElderlyDetailPage> {
           SnackBar(content: Text('Initiating call to $phoneNumber...')),
         );
         
-        // Call native method
+        // Call native method through channel
         final result = await _channel.invokeMethod(
           'makeCall', 
           {'number': phoneNumber}
@@ -152,7 +186,7 @@ class _ElderlyDetailPageState extends State<ElderlyDetailPage> {
     }
   }
   
-  // Request permissions and send an SMS
+  // Handle SMS sending
   Future<void> _sendSms() async {
     final phoneNumber = widget.elderly.phone;
     
@@ -165,12 +199,12 @@ class _ElderlyDetailPageState extends State<ElderlyDetailPage> {
           SnackBar(content: Text('Sending message to $phoneNumber...')),
         );
         
-        // Call native method
+        // Call native method through channel
         final result = await _channel.invokeMethod(
           'sendSMS', 
           {
             'number': phoneNumber,
-            'message': 'Hello, this is a message from your caregiver application.'
+            'message': 'Hello from the Boing caregiver app. How are you doing today?'
           }
         );
         
@@ -197,6 +231,24 @@ class _ElderlyDetailPageState extends State<ElderlyDetailPage> {
         ),
       );
     }
+  }
+  
+  // Add new emergency contact
+  void _addEmergencyContact() {
+    final number = _newEmergencyNumberController.text.trim();
+    if (number.isNotEmpty && !emergencyContacts.contains(number)) {
+      setState(() {
+        emergencyContacts.add(number);
+        _newEmergencyNumberController.clear();
+      });
+    }
+  }
+  
+  // Remove emergency contact
+  void _removeEmergencyContact(String number) {
+    setState(() {
+      emergencyContacts.remove(number);
+    });
   }
 
   @override
@@ -297,10 +349,9 @@ class _ElderlyDetailPageState extends State<ElderlyDetailPage> {
                       ),
                     ],
                   ),
-                  
                   SizedBox(height: 24),
                   
-                  // Settings section
+                  // Alert Settings section
                   Text(
                     'Alert Settings',
                     style: Theme.of(context).textTheme.titleLarge,

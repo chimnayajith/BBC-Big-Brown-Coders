@@ -58,19 +58,37 @@ _Replace VIDEO_ID with your YouTube video ID or provide an alternative demo link
 - **Other Tools**: OpenCV
 
 ### Key Features
-- Feature 1
-- Feature 2
-- Feature 3
+- Real-Time Fall Detection: Using phone sensors and camera analysis.
+- Automatic SOS Alerts: Instant notifications, calls, and SMS to caregivers.
+- Caregiver Dashboard: View health logs, event history, and customize settings.
 
 ## Setup Instructions
 
 ### Prerequisites
-- Requirement 1
-- Requirement 2
-- Requirement 3
+- Python 3.10+
+- Flutter 3.0+
+- PostgreSQL
+- django
 
 ### Installation 
-```bash
+```
+
+git clone https://github.com/chimnayajith/BBC-Big-Brown-Coders.git
+cd BBC-Big-Brown-Coders
+
+```
+### Frontend setup
+```
+
+cd boing_frontend
+flutter pub get
+flutter run
+
+```
+
+### Backend setup
+```
+
 
 ```
 
@@ -91,8 +109,8 @@ _Discuss technical challenges and how you overcame them_
 _Share your vision for future development_
 
 ### References (if any)
-- [Reference 1](link)
-- [Reference 2](link)
+- [Reference 1](https://www.who.int/news-room/fact-sheets/detail/ageing-and-health)
+- [Reference 2](https://docs.ultralytics.com/modes/train/)
 
 ---
 

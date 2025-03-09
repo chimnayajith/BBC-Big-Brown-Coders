@@ -33,7 +33,8 @@ class LoginView(APIView):
                     "name": user.name,
                     "phone": user.phone,
                     "email": user.email,
-                    "role": user.role
+                    "role": user.role,
+                    "emergency_contact":user.emergency_contact
                 }
             }, status=status.HTTP_200_OK)
 

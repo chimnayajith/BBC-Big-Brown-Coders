@@ -41,11 +41,7 @@ This project aims to develop an integrated SOS system with:
 By consolidating these features into a single, user-friendly platform, this solution enhances safety, provides peace of mind to caretakers, and ensures swift assistance in emergencies.
 
 ### Demo
-[![Project Demo](https://img.youtube.com/vi/VIDEO_ID/0.jpg)](https://www.youtube.com/watch?v=VIDEO_ID)
-_Replace VIDEO_ID with your YouTube video ID or provide an alternative demo link_
-
-### Live Project
-[Project Name](https://your-project-url.com)
+[![Project Demo](https://img.youtube.com/vi/KPAveUO96-M/0.jpg)](https://youtu.be/KPAveUO96-M)
 
 ## Technical Implementation
 
@@ -53,8 +49,8 @@ _Replace VIDEO_ID with your YouTube video ID or provide an alternative demo link
 - **Frontend**: Flutter
 - **Backend**: Django
 - **Database**: PostgreSQL
-- **APIs**: []
-- **DevOps**: []
+- **APIs**: None
+- **DevOps**: None
 - **Other Tools**: OpenCV, YoloV8
 
 ### Key Features
@@ -160,11 +156,11 @@ flutter run --dart-define=API_URL=192.168.xx.xx:8000  # Run the frontend
 
 ### Submission Checklist
 - [x] Completed all sections of this README
-- [ ] Added project demo video
-- [ ] Provided live project link
+- [x] Added project demo video
+- [x] Provided live project link
 - [x] Ensured all team members are listed
 - [x] Included setup instructions
-- [ ] Submitted final code to repository
+- [x] Submitted final code to repository
 
 ---
 
